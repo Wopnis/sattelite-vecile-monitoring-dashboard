@@ -6,12 +6,19 @@ from messages.message_tab import MessageTab
 from notes.notes_tab import NotesTab
 from blacklist.blacklist_tab import BlacklistTab
 from shifts.shifts_tab import ShiftsTab
+from PyQt5.QtGui import QIcon
+
 
 
 class MainWindow(QMainWindow):
+    
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon("icons/monitoring.ico"))
         self.setWindowTitle("Дашборд оператора мониторинга")
+        self.setWindowIcon(QIcon("icons/icon.png"))
+       
+
 
         # ✅ Стартовый размер и минимальный размер
         self.resize(1200, 800)
