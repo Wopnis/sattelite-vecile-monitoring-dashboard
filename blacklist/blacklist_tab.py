@@ -104,7 +104,10 @@ class BlacklistTab(QWidget):
 
     def select_record(self, item):
         record = item.data(Qt.UserRole)
-        QMessageBox.information(self, "Запись", f"VIN: {record.get('vin','')}\nДоговор: {record.get('contract','')}\nПричина: {record.get('reason','')}")
+        QMessageBox.information(
+            self, "Запись",
+            f"VIN: {record.get('vin','')}\nДоговор: {record.get('contract','')}\nПричина: {record.get('reason','')}"
+        )
 
     def edit_record(self, pos):
         item = self.list_widget.itemAt(pos)
@@ -125,40 +128,57 @@ class BlacklistTab(QWidget):
         layout.addRow("Договор:", contract_input)
         layout.addRow("Причина:", reason_input)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel | QDialogButtonBox.Discard)
+        # Кнопки
+        buttons = QDialogButtonBox()
+        save_button = buttons.addButton("Сохранить", QDialogButtonBox.AcceptRole)
+        cancel_button = buttons.addButton("Отмена", QDialogButtonBox.RejectRole)
+        delete_button = buttons.addButton("Удалить запись", QDialogButtonBox.DestructiveRole)
+
+        # Стили
+        save_button.setStyleSheet("background-color: #90EE90; color: black; font-weight: bold;")
+        cancel_button.setStyleSheet("background-color: #87CEFA; color: black; font-weight: bold;")
+        delete_button.setStyleSheet("background-color: #FF6347; color: white; font-weight: bold;")
+
         layout.addRow(buttons)
 
         def save_changes():
-            confirm = QMessageBox.question(self, "Подтверждение", "Сохранить изменения?", QMessageBox.Yes | QMessageBox.No)
+            confirm = QMessageBox.question(
+                self, "Подтверждение", "Сохранить изменения?",
+                QMessageBox.Yes | QMessageBox.No
+            )
             if confirm == QMessageBox.Yes:
                 updated_record = {
                     "vin": vin_input.text().strip(),
                     "contract": contract_input.text().strip(),
                     "reason": reason_input.toPlainText().strip()
                 }
-
                 for idx, r in enumerate(self.records):
                     if r == record:
                         self.records[idx] = updated_record
                         break
-
                 self.save_blacklist()
                 self.perform_search()
                 dialog.accept()
 
         def delete_record():
-            confirm1 = QMessageBox.question(self, "Удаление", "Вы точно хотите удалить запись?", QMessageBox.Yes | QMessageBox.No)
+            confirm1 = QMessageBox.question(
+                self, "Удаление", "Вы точно хотите удалить запись?",
+                QMessageBox.Yes | QMessageBox.No
+            )
             if confirm1 == QMessageBox.Yes:
-                confirm2 = QMessageBox.question(self, "Подтверждение удаления", "Это действие необратимо. Удалить?", QMessageBox.Yes | QMessageBox.No)
+                confirm2 = QMessageBox.question(
+                    self, "Подтверждение удаления", "Это действие необратимо. Удалить?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
                 if confirm2 == QMessageBox.Yes:
                     self.records = [r for r in self.records if r != record]
                     self.save_blacklist()
                     self.perform_search()
                     dialog.accept()
 
-        buttons.accepted.connect(save_changes)
-        buttons.rejected.connect(dialog.reject)
-        buttons.button(QDialogButtonBox.Discard).clicked.connect(delete_record)
+        save_button.clicked.connect(save_changes)
+        cancel_button.clicked.connect(dialog.reject)
+        delete_button.clicked.connect(delete_record)
 
         dialog.setLayout(layout)
         dialog.exec_()
