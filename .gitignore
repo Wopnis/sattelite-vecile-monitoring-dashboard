@@ -1,0 +1,31 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Виртуальное окружение
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Служебные файлы
+.DS_Store
+Thumbs.db
+
+# Данные
+data/
+*.json
+!data/template.json         # оставить шаблон
+!messages/template.json     # оставить шаблон
+# Авторская подпись (исключить открытый текст)
+author_proof.txt            # исключаем открытый файл
+!author_proof.txt.gpg       # оставляем зашифрованный
+
+.docx                      # техническое задание
+
+# Логи
+*.log

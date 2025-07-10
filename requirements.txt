@@ -1,0 +1,10 @@
+argcomplete==3.6.2
+click==8.2.0
+colorama==0.4.6
+packaging==25.0
+pipx==1.7.1
+platformdirs==4.3.8
+pyperclip==1.9.0
+python-dotenv==1.1.0
+pytz==2025.2
+userpath==1.9.2
