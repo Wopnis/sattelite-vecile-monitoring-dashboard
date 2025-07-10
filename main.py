@@ -9,6 +9,8 @@ import sys
 import hashlib
 from PyQt5.QtWidgets import QApplication, QStatusBar
 from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QIcon
+# from PyQt5.QtWidgets import QApplication
 
 from main_window import MainWindow
 
@@ -93,6 +95,7 @@ def apply_bento_theme(app: QApplication):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("icons/monitoring.ico")) 
 
     apply_bento_theme(app)
 
