@@ -61,8 +61,22 @@ class AlarmEntryForm(QWidget):
 
         # ✅ Проверка чёрного списка
         if self.blacklist_tab and self.blacklist_tab.is_blacklisted(vin, contract):
-            QMessageBox.warning(self, "Внимание", "VIN или договор присутствуют в чёрном списке!")
-            # return
+            warning_box = QMessageBox(self)
+            warning_box.setWindowTitle("⚠️ Внимание")
+            warning_box.setText("VIN или договор присутствуют в чёрном списке!")
+            warning_box.setIcon(QMessageBox.Warning)
+            warning_box.setStyleSheet("""
+                QMessageBox {
+                    background-color: #C62828;  /* Красный фон */
+                    color: white;               /* Белый текст */
+                    font-weight: bold;
+                }
+                QPushButton {
+                    background-color: white;
+                    color: black;
+                }
+            """)
+            warning_box.exec_()
 
         # Проверка на дубликат активной тревоги
         for alarm in self.alarm_manager.alarms:

@@ -5,16 +5,21 @@
 ──────────────────────────────────────────────
 """
 
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # ⬅️ Включаем high-DPI на Windows
+except:  # noqa: E722
+    pass
+
 import sys
 import hashlib
 from PyQt5.QtWidgets import QApplication, QStatusBar
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtGui import QIcon
-# from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QPalette, QColor, QIcon
+from PyQt5.QtCore import Qt
 
 from main_window import MainWindow
 
-# 🔏 Цифровая подпись (не мешает работе, но легко доказать авторство)
+# 🔏 Цифровая подпись
 __author_signature__ = "Wopnis-2025-UNIQUE-SIGNATURE-741"
 __author_hash__ = hashlib.sha256("W-2025".encode()).hexdigest()
 
@@ -94,6 +99,9 @@ def apply_bento_theme(app: QApplication):
     """)
 
 if __name__ == "__main__":
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("icons/monitoring.ico")) 
 
@@ -101,7 +109,6 @@ if __name__ == "__main__":
 
     window = MainWindow()
 
-    # 🖋️ Строка авторства внизу окна
     status_bar = QStatusBar()
     status_bar.showMessage("Автор: W | © 2025")
     window.setStatusBar(status_bar)
