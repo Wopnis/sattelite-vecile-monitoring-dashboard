@@ -35,6 +35,13 @@ monitoring_dashboard/
 ├── shifts/
 │   ├──  shifts_tab.py                # интерфейс вкладки
 │   └── shifts_data.json``          # база смен
+│
+├── icons/
+│   └── icon.png
+    └── monitoring.ico 
 
 ---
 
+D:\WORKing_FOLDER\PROJECTS\1. satellite_monitoring\MONITORING_DASHBOARD_ChAT_GPT-2\.venv\Scripts\activate
+
+D:\WORKing_FOLDER\PROJECTS\1. satellite_monitoring\MONITORING_DASHBOARD_ChAT_GPT-2
