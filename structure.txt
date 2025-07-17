@@ -45,3 +45,9 @@ monitoring_dashboard/
 D:\WORKing_FOLDER\PROJECTS\1. satellite_monitoring\MONITORING_DASHBOARD_ChAT_GPT-2\.venv\Scripts\activate
 
 D:\WORKing_FOLDER\PROJECTS\1. satellite_monitoring\MONITORING_DASHBOARD_ChAT_GPT-2
+
+Знаешь, надо еще реализовать сквозной поиск по приложению, 
+я думаю сделать его на вкладке поиска, дополнительным полем. 
+Это будет поиск по всему, по тревогам, по заметкам, по черному списку. 
+Ее тоже желательно сделать отдельным модулем, чтобы минимально изменять работающий код. 
+Может, он будет искать в файлах json баз данных приложения? Вообщем, давай делать!

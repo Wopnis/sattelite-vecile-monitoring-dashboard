@@ -4,17 +4,17 @@ import uuid
 from datetime import datetime
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
-    QTextEdit, QListWidget, QListWidgetItem, QMessageBox, QDialog,
-    QDialogButtonBox
+    QTextEdit, QListWidget, QListWidgetItem, QMessageBox
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from utils.shift_report import generate_shift_report
 
 
 class ShiftsTab(QWidget):
-    def __init__(self, alarm_manager=None):
+    def __init__(self, alarm_manager=None, on_shift_started=None):
         super().__init__()
         self.alarm_manager = alarm_manager
+        self.on_shift_started = on_shift_started
         self.data_file = "shifts/shifts_data.json"
         self.shifts = self.load_shifts()
         self.active_shift = self.get_active_shift()
@@ -23,16 +23,16 @@ class ShiftsTab(QWidget):
         layout = QVBoxLayout()
 
         self.status_label = QLabel()
-        self.start_button = QPushButton("Начать смену")
-        self.end_button = QPushButton("Завершить смену")
-        self.end_button.setEnabled(bool(self.active_shift))
-
-        self.start_button.clicked.connect(self.start_shift)
-        self.end_button.clicked.connect(self.end_shift)
-
         layout.addWidget(self.status_label)
+
+        self.start_button = QPushButton("Начать смену")
+        self.start_button.clicked.connect(self.start_shift)
         layout.addWidget(self.start_button)
+
+        self.end_button = QPushButton("Завершить смену")
+        self.end_button.clicked.connect(self.end_shift)
         layout.addWidget(self.end_button)
+        self.end_button.setEnabled(bool(self.active_shift))
 
         layout.addWidget(QLabel("Комментарий:"))
         self.comment_input = QTextEdit()
@@ -40,7 +40,7 @@ class ShiftsTab(QWidget):
 
         layout.addWidget(QLabel("История смен:"))
         self.shift_list = QListWidget()
-        self.shift_list.itemDoubleClicked.connect(self.show_shift_details)
+        self.shift_list.itemDoubleClicked.connect(self.show_shift_report)
         layout.addWidget(self.shift_list)
 
         self.setLayout(layout)
@@ -49,7 +49,12 @@ class ShiftsTab(QWidget):
     def load_shifts(self):
         if os.path.exists(self.data_file):
             with open(self.data_file, "r", encoding="utf-8") as f:
-                return json.load(f)
+                try:
+                    data = json.load(f)
+                    # ✅ фильтруем мусор — оставляем только словари
+                    return [entry for entry in data if isinstance(entry, dict)]
+                except json.JSONDecodeError:
+                    return []
         return []
 
     def save_shifts(self):
@@ -59,7 +64,7 @@ class ShiftsTab(QWidget):
 
     def get_active_shift(self):
         for shift in self.shifts:
-            if not shift.get("ended_at"):
+            if isinstance(shift, dict) and not shift.get("ended_at"):
                 return shift
         return None
 
@@ -79,26 +84,25 @@ class ShiftsTab(QWidget):
         self.shifts.append(new_shift)
         self.active_shift = new_shift
         self.current_shift_id = new_shift_id
-        # Перенос активных тревог в новую смену
-        active_old = [
-            alarm for alarm in self.alarm_manager.alarms
-            if alarm.get("status") == "active"
-        ]
 
-        for alarm in active_old:
-            copied = alarm.copy()
-            copied["shift_id"] = new_shift_id
-            self.alarm_manager.alarms.append(copied)
+        if self.alarm_manager:
+            active_alarms = [
+                alarm for alarm in self.alarm_manager.alarms
+                if alarm.get("status") == "active"
+            ]
+            for alarm in active_alarms:
+                copied = alarm.copy()
+                copied["shift_id"] = new_shift_id
+                self.alarm_manager.alarms.append(copied)
+            self.alarm_manager.save_alarms()
 
-        self.alarm_manager.save_alarms()
         self.save_shifts()
         print(f"[SHIFT] Новая смена начата: {new_shift_id}")
 
         if self.on_shift_started:
-            self.on_shift_started()  # ✅ уведомляем AlarmTab
+            self.on_shift_started()
 
         self.refresh_ui()
-
 
     def end_shift(self):
         if not self.active_shift:
@@ -108,17 +112,19 @@ class ShiftsTab(QWidget):
         comment = self.comment_input.toPlainText().strip()
         self.active_shift["ended_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.active_shift["comment"] = comment
+
         self.active_shift = None
         self.current_shift_id = None
         self.comment_input.clear()
+
         self.save_shifts()
         self.refresh_ui()
 
     def refresh_ui(self):
         if self.active_shift:
             self.status_label.setText(f"<b>Текущая смена начата:</b> {self.active_shift['started_at']}")
-            self.end_button.setEnabled(True)
             self.start_button.setEnabled(False)
+            self.end_button.setEnabled(True)
         else:
             self.status_label.setText("Нет активной смены.")
             self.start_button.setEnabled(True)
@@ -126,32 +132,21 @@ class ShiftsTab(QWidget):
 
         self.shift_list.clear()
         for shift in reversed(self.shifts):
-            text = f"{shift['started_at']} → {shift.get('ended_at', 'в процессе')}"
-            item = QListWidgetItem(text)
-            item.setData(Qt.UserRole, shift)
-            self.shift_list.addItem(item)
+            if isinstance(shift, dict):
+                text = f"{shift['started_at']} → {shift.get('ended_at', 'в процессе')}"
+                item = QListWidgetItem(text)
+                item.setData(Qt.UserRole, shift)
+                self.shift_list.addItem(item)
 
-    def show_shift_details(self, item):
+    def show_shift_report(self, item):
         shift = item.data(Qt.UserRole)
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Детали смены")
+        shift_id = shift.get("id")
+        report = generate_shift_report(shift_id)
 
-        layout = QVBoxLayout()
-        text = QTextEdit()
-        text.setReadOnly(True)
-        text.setFont(QFont("Courier", 10))
+        comment = shift.get("comment", "").strip()
+        comment_text = f"\n📝 Комментарий к смене:\n{comment}" if comment else "\n📝 Комментарий: (отсутствует)"
 
-        text.setText(
-            f"ID смены: {shift.get('id')}\n"
-            f"Начало: {shift.get('started_at')}\n"
-            f"Окончание: {shift.get('ended_at', '-')}\n\n"
-            f"Комментарий:\n{shift.get('comment', '')}"
-        )
-        layout.addWidget(text)
+        full_report = f"{report}\n{comment_text}"
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.accepted.connect(dialog.accept)
-        layout.addWidget(buttons)
+        QMessageBox.information(self, "📋 Отчёт по смене", full_report)
 
-        dialog.setLayout(layout)
-        dialog.exec_()
