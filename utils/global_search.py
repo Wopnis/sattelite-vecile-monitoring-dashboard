@@ -24,18 +24,20 @@ def global_search(keyword):
                         "data": alarm
                     })
 
-    # Заметки
+    # 🔍 Поиск в заметках
     if os.path.exists("notes/notes_data.json"):
         with open("notes/notes_data.json", "r", encoding="utf-8") as f:
             notes = json.load(f)
             for note in notes:
-                if keyword in note.get("text", "").lower():
+                combined = f"{note.get('title', '')} {note.get('content', '')}".lower()
+                if keyword in combined:
                     results.append({
                         "source": "note",
-                        "text": f"[Заметка] {note.get('text')[:40]}...",
-                        "tooltip": note.get("text"),
+                        "text": f"[Заметка] {note.get('title')} | {note.get('content')[:40]}",
+                        "tooltip": note.get("content"),
                         "data": note
                     })
+
 
     # Чёрный список
     if os.path.exists("blacklist/blacklist_data.json"):
