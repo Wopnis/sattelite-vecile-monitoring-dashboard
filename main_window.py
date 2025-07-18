@@ -1,4 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QTabWidget, QDesktopWidget
+from PyQt5.QtGui import QIcon
+
+# Модули приложения
 from alarms.alarm_manager import AlarmManager
 from alarms.alarm_tab import AlarmTab
 from alarms.alarm_search_tab import AlarmSearchTab
@@ -6,19 +9,14 @@ from messages.message_tab import MessageTab
 from notes.notes_tab import NotesTab
 from blacklist.blacklist_tab import BlacklistTab
 from shifts.shifts_tab import ShiftsTab
-from PyQt5.QtGui import QIcon
-
-
+from letters.letters_tab import LettersTab  # ✅ Новый модуль
 
 class MainWindow(QMainWindow):
-    
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon("icons/monitoring.ico"))
         self.setWindowTitle("Дашборд оператора мониторинга")
         self.setWindowIcon(QIcon("icons/icon.png"))
-       
-
 
         # ✅ Стартовый размер и минимальный размер
         self.resize(1200, 800)
@@ -46,11 +44,14 @@ class MainWindow(QMainWindow):
         self.message_tab = MessageTab(self.get_last_alarm)
         self.search_tab = AlarmSearchTab(self.alarm_manager)
         self.notes_tab = NotesTab()
+        self.letters_tab = LettersTab()  # ✅ Новая вкладка "Письма"
 
+        # 📑 Добавление вкладок
         self.tabs.addTab(self.alarm_tab, "Тревоги")
         self.tabs.addTab(self.message_tab, "Сообщения")
         self.tabs.addTab(self.search_tab, "Поиск")
         self.tabs.addTab(self.notes_tab, "Заметки")
+        self.tabs.addTab(self.letters_tab, "Письма")  # ✅ Добавлена сюда
         self.tabs.addTab(self.shifts_tab, "Смены")
         self.tabs.addTab(self.blacklist_tab, "Чёрный список")
 
