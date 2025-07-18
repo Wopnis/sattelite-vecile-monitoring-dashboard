@@ -40,4 +40,9 @@ monitoring_dashboard/
 │   └── icon.png
     └── monitoring.ico 
 
+├── letters/
+│   ├── letters_tab.py
+├── templates/
+│   └── letters_templates.json
+
 ---

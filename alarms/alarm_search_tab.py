@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QListWidget, QListWidgetItem, QMessageBox, QDialog, QTextEdit, QDialogButtonBox
+    QListWidget, QListWidgetItem, QMessageBox, QDialog, QTextEdit, QDialogButtonBox, QApplication
 )
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
 
 
 class AlarmSearchTab(QWidget):
@@ -14,7 +13,7 @@ class AlarmSearchTab(QWidget):
 
         layout = QVBoxLayout()
 
-        # 🔹 Форма поиска
+        # 🔹 Поиск по тревогам
         form_layout = QHBoxLayout()
         self.vin_input = QLineEdit()
         self.contract_input = QLineEdit()
@@ -42,11 +41,23 @@ class AlarmSearchTab(QWidget):
 
         layout.addLayout(form_layout)
 
-        # 🔹 Результаты поиска
+        # 🔍 Глобальный поиск
+        global_layout = QHBoxLayout()
+        global_layout.addWidget(QLabel("🔎 Глобальный поиск:"))
+        self.global_input = QLineEdit()
+        global_layout.addWidget(self.global_input)
+
+        self.global_search_button = QPushButton("Найти везде")
+        self.global_search_button.clicked.connect(self.perform_global_search)
+        global_layout.addWidget(self.global_search_button)
+
+        layout.addLayout(global_layout)
+
+        # 🔹 Результаты
         self.result_list = QListWidget()
         self.result_list.itemClicked.connect(self.highlight_item)
         self.result_list.itemPressed.connect(self.handle_right_click)
-        self.result_list.itemDoubleClicked.connect(self.show_details_dialog)  # ✅ Двойной клик
+        self.result_list.itemDoubleClicked.connect(self.show_details_dialog)
         layout.addWidget(self.result_list)
 
         self.setLayout(layout)
@@ -101,6 +112,7 @@ class AlarmSearchTab(QWidget):
         self.vin_input.clear()
         self.contract_input.clear()
         self.keyword_input.clear()
+        self.global_input.clear()
         self.result_list.clear()
         self.vin_input.setFocus()
 
@@ -112,25 +124,42 @@ class AlarmSearchTab(QWidget):
             self.show_details_dialog(item)
 
     def show_details_dialog(self, item):
-        alarm = item.data(Qt.UserRole)
+        data = item.data(Qt.UserRole)
+        if not data:
+            return
+
         dialog = QDialog(self)
-        dialog.setWindowTitle("Детали тревоги")
+        dialog.setWindowTitle("Детали")
         layout = QVBoxLayout()
 
         text_box = QTextEdit()
         text_box.setReadOnly(True)
         text_box.setFont(QFont("Courier", 10))
-        text_box.setText(
-            f"Марка: {alarm.get('brand')}\n"
-            f"VIN: {alarm.get('vin')}\n"
-            f"Госномер: {alarm.get('license')}\n"
-            f"Договор: {alarm.get('contract')}\n"
-            f"Лизингополучатель: {alarm.get('lessee')}\n"
-            f"Сообщение: {alarm.get('message')}\n"
-            f"Комментарий: {alarm.get('comment')}\n"
-            f"Добавлено: {alarm.get('timestamp')}\n"
-            f"Закрыто: {alarm.get('closed_at', '-')}"
-        )
+
+        if "message" in data:  # Это тревога
+            text_box.setText(
+                f"Марка: {data.get('brand')}\n"
+                f"VIN: {data.get('vin')}\n"
+                f"Госномер: {data.get('license')}\n"
+                f"Договор: {data.get('contract')}\n"
+                f"Лизингополучатель: {data.get('lessee')}\n"
+                f"Сообщение: {data.get('message')}\n"
+                f"Комментарий: {data.get('comment')}\n"
+                f"Добавлено: {data.get('timestamp')}\n"
+                f"Закрыто: {data.get('closed_at', '-')}"
+            )
+        elif "text" in data:  # Это заметка
+            text_box.setText(f"Заметка:\n\n{data.get('text')}")
+        elif "reason" in data:  # Это чёрный список
+            text_box.setText(
+                f"🚫 Чёрный список\n\n"
+                f"VIN: {data.get('vin')}\n"
+                f"Договор: {data.get('contract')}\n"
+                f"Причина: {data.get('reason')}"
+            )
+        else:
+            text_box.setText(str(data))
+
         layout.addWidget(text_box)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
@@ -139,3 +168,26 @@ class AlarmSearchTab(QWidget):
 
         dialog.setLayout(layout)
         dialog.exec_()
+
+    def perform_global_search(self):
+        from utils.global_search import global_search
+
+        keyword = self.global_input.text().strip()
+        self.result_list.clear()
+
+        if not keyword:
+            QMessageBox.warning(self, "Пусто", "Введите слово для глобального поиска.")
+            return
+
+        results = global_search(keyword)
+        if not results:
+            QMessageBox.information(self, "Поиск", "Ничего не найдено.")
+            return
+
+        for res in results:
+            item = QListWidgetItem(res["text"])
+            item.setData(Qt.UserRole, res.get("data"))
+            item.setToolTip(res.get("tooltip", ""))
+            item.setForeground(Qt.black)
+            item.setBackground(Qt.lightGray)
+            self.result_list.addItem(item)
