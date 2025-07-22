@@ -2,23 +2,21 @@ import json
 import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton,
-    QTextEdit, QMessageBox, QGroupBox, QFormLayout
+    QTextEdit, QMessageBox, QGroupBox, QFormLayout, QApplication
 )
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication
-# from PyQt5.QtCore import QClipboard
+
 
 class MessageTab(QWidget):
-    def __init__(self, get_last_alarm_callback):
+    def __init__(self, get_current_alarm_callback):
         super().__init__()
-        self.get_last_alarm = get_last_alarm_callback
+        self.get_current_alarm = get_current_alarm_callback
         self.templates = self.load_templates()
 
         layout = QVBoxLayout()
         font = QFont()
         font.setPointSize(12)
 
-        # 🔹 Информация о текущей тревоге
         self.info_group = QGroupBox("Обрабатываемая тревога")
         info_layout = QFormLayout()
         self.vin_label = QLabel("")
@@ -33,7 +31,6 @@ class MessageTab(QWidget):
         self.info_group.setLayout(info_layout)
         layout.addWidget(self.info_group)
 
-        # 🔹 Шаблоны
         layout.addWidget(QLabel("Выберите шаблон сообщения:"))
         self.template_box = QComboBox()
         self.template_box.setFont(font)
@@ -42,11 +39,8 @@ class MessageTab(QWidget):
 
         self.generate_button = QPushButton("Сформировать сообщение")
         self.generate_button.setFont(font)
-        self.generate_button.setDefault(True)
-        self.generate_button.setAutoDefault(True)
         self.generate_button.clicked.connect(self.generate_message)
         layout.addWidget(self.generate_button)
-        self.generate_button.setFocus()
 
         self.message_box = QTextEdit()
         self.message_box.setFont(QFont("Courier", 12))
@@ -77,8 +71,8 @@ class MessageTab(QWidget):
 
     def generate_message(self):
         template = self.template_box.currentText()
-        alarm = self.get_last_alarm()
-        if not alarm:
+        alarm = self.get_current_alarm()
+        if not alarm or not alarm.get("vin"):
             QMessageBox.warning(self, "Ошибка", "Нет данных тревоги.")
             return
 
@@ -99,3 +93,9 @@ class MessageTab(QWidget):
         self.vin_label.setText(alarm.get("vin", ""))
         self.contract_label.setText(alarm.get("contract", ""))
         self.brand_label.setText(alarm.get("brand", ""))
+
+    def on_tab_activated(self):
+        """Вызывается при переходе на вкладку"""
+        alarm = self.get_current_alarm()
+        if alarm and alarm.get("vin"):
+            self.update_alarm_info(alarm)
