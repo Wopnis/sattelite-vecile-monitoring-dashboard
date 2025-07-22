@@ -72,7 +72,7 @@ class AlarmSearchTab(QWidget):
             return
 
         results = []
-        for i, alarm in enumerate(self.alarm_manager.alarms):
+        for alarm in self.alarm_manager.alarms:
             match = True
             if vin and vin not in alarm.get("vin", "").lower():
                 match = False
@@ -86,24 +86,27 @@ class AlarmSearchTab(QWidget):
                 if keyword not in combined:
                     match = False
             if match:
-                results.append((i, alarm))
+                results.append(alarm)
 
         self.result_list.clear()
         if not results:
             QMessageBox.information(self, "Результаты", "Ничего не найдено.")
             return
 
-        for index, alarm in results:
-            item_text = f"{alarm.get('vin')} | {alarm.get('contract')} | {alarm.get('brand')}"
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.UserRole, alarm)
-            item.setToolTip(
+        for alarm in results:
+            timestamp = alarm.get("timestamp", "-")
+            closed = alarm.get("closed_at", "-")
+            item_text = f"[Тревога] {timestamp} | {alarm.get('vin')} | {alarm.get('contract')} | {alarm.get('message')}"
+            tooltip = (
                 f"Марка: {alarm.get('brand')}\n"
                 f"VIN: {alarm.get('vin')}\n"
                 f"Договор: {alarm.get('contract')}\n"
-                f"Сообщение: {alarm.get('message')}\n"
-                f"Комментарий: {alarm.get('comment')}"
+                f"Открыта: {timestamp}\n"
+                f"Закрыта: {closed}"
             )
+            item = QListWidgetItem(item_text)
+            item.setData(Qt.UserRole, alarm)
+            item.setToolTip(tooltip)
             item.setForeground(Qt.red)
             item.setBackground(Qt.yellow)
             self.result_list.addItem(item)
@@ -145,11 +148,11 @@ class AlarmSearchTab(QWidget):
                 f"Лизингополучатель: {data.get('lessee')}\n"
                 f"Сообщение: {data.get('message')}\n"
                 f"Комментарий: {data.get('comment')}\n"
-                f"Добавлено: {data.get('timestamp')}\n"
-                f"Закрыто: {data.get('closed_at', '-')}"
+                f"Открыта: {data.get('timestamp', '-')}\n"
+                f"Закрыта: {data.get('closed_at', '-')}"
             )
-        elif "text" in data:  # Это заметка
-            text_box.setText(f"Заметка:\n\n{data.get('text')}")
+        elif "title" in data and "content" in data:  # Это заметка
+            text_box.setText(f"Заметка:\n\n{data.get('title')}\n\n{data.get('content')}")
         elif "reason" in data:  # Это чёрный список
             text_box.setText(
                 f"🚫 Чёрный список\n\n"

@@ -47,11 +47,21 @@ class AlarmListView(QWidget):
         filtered_alarms = [
             alarm for alarm in self.alarm_manager.alarms
             if alarm.get("shift_id") == shift_id and
-               (not show_only_active or alarm.get("status") == "active")
+            (not show_only_active or alarm.get("status") == "active")
         ]
 
         for alarm in filtered_alarms:
-            item_text = f"{alarm.get('vin', '')} | {alarm.get('contract', '')} | {alarm.get('brand', '')} | {alarm.get('message', '')}"
+            vin = alarm.get("vin", "")
+            contract = alarm.get("contract", "")
+            brand = alarm.get("brand", "")
+            message = alarm.get("message", "")
+            opened = alarm.get("timestamp", "")
+            closed = alarm.get("closed_at", "—") if alarm.get("status") == "closed" else "—"
+
+            item_text = (
+                f"{vin} | {contract} | {brand} | {message} | "
+                f"Открыта: {opened} | Закрыта: {closed}"
+            )
             item = QListWidgetItem(item_text)
             item.setData(Qt.UserRole, alarm)
 
@@ -62,6 +72,7 @@ class AlarmListView(QWidget):
                 item.setForeground(QColor("gray"))
 
             self.list_widget.addItem(item)
+
 
     def handle_double_click(self, item):
         alarm = item.data(Qt.UserRole)

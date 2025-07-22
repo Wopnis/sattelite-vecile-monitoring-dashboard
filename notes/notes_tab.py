@@ -3,7 +3,7 @@ import json
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
     QPushButton, QListWidget, QListWidgetItem, QMessageBox,
-    QInputDialog, QDialog, QDialogButtonBox
+    QDialog, QDialogButtonBox
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
@@ -124,6 +124,7 @@ class NotesTab(QWidget):
         layout.addWidget(buttons)
 
         dialog.setLayout(layout)
+        dialog.resize(600, 400)  # 📏 Увеличено окно просмотра
         dialog.exec_()
 
     def handle_right_click(self, item):
@@ -132,16 +133,40 @@ class NotesTab(QWidget):
 
     def edit_note(self, item):
         note = item.data(Qt.UserRole)
-        title, ok1 = QInputDialog.getText(self, "Редактировать заголовок", "Заголовок:", text=note["title"])
-        if not ok1 or not title.strip():
+        try:
+            index = self.notes.index(note)
+        except ValueError:
             return
-        content, ok2 = QInputDialog.getMultiLineText(self, "Редактировать содержание", "Содержание:", note["content"])
-        if not ok2 or not content.strip():
-            return
-        note["title"] = title.strip()
-        note["content"] = content.strip()
-        self.save_notes()
-        self.refresh_list()
+
+        # 📝 Окно редактирования
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Редактировать заметку")
+        layout = QVBoxLayout()
+
+        title_input = QLineEdit(note["title"])
+        content_input = QTextEdit(note["content"])
+        content_input.setFont(QFont("Courier", 10))
+
+        layout.addWidget(QLabel("Заголовок:"))
+        layout.addWidget(title_input)
+        layout.addWidget(QLabel("Содержание:"))
+        layout.addWidget(content_input)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        dialog.setLayout(layout)
+        dialog.resize(600, 500)  # 📏 Большое окно редактирования
+        if dialog.exec_() == QDialog.Accepted:
+            new_title = title_input.text().strip()
+            new_content = content_input.toPlainText().strip()
+            if new_title and new_content:
+                self.notes[index]["title"] = new_title
+                self.notes[index]["content"] = new_content
+                self.save_notes()
+                self.refresh_list()
 
     def delete_note(self):
         item = self.list_widget.currentItem()

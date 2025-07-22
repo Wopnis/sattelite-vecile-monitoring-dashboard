@@ -10,6 +10,8 @@ from notes.notes_tab import NotesTab
 from blacklist.blacklist_tab import BlacklistTab
 from shifts.shifts_tab import ShiftsTab
 from letters.letters_tab import LettersTab  # ✅ Новый модуль
+from reminders.reminders_tab import RemindersTab  # ✅ Новая вкладка
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,6 +47,8 @@ class MainWindow(QMainWindow):
         self.search_tab = AlarmSearchTab(self.alarm_manager)
         self.notes_tab = NotesTab()
         self.letters_tab = LettersTab()  # ✅ Новая вкладка "Письма"
+        self.reminders_tab = RemindersTab()  # ✅ Вкладка напоминаний
+
 
         # 📑 Добавление вкладок
         self.tabs.addTab(self.alarm_tab, "Тревоги")
@@ -52,6 +56,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.search_tab, "Поиск")
         self.tabs.addTab(self.notes_tab, "Заметки")
         self.tabs.addTab(self.letters_tab, "Письма")  # ✅ Добавлена сюда
+        self.tabs.addTab(self.reminders_tab, "Напоминания")  # ✅ Новая вкладка
         self.tabs.addTab(self.shifts_tab, "Смены")
         self.tabs.addTab(self.blacklist_tab, "Чёрный список")
 
