@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QDialog, QFormLayout, QDialogButtonBox, QLabel
 )
 from PyQt5.QtCore import Qt
+# from PyQt5.QtGui import QIcon
 
 
 class BlacklistTab(QWidget):
@@ -14,18 +15,36 @@ class BlacklistTab(QWidget):
         self.data_file = "data/blacklist.json"
         self.records = self.load_blacklist()
 
+        self.setStyleSheet("""
+            QPushButton {
+                padding: 6px;
+                font-weight: bold;
+            }
+            QListWidget::item {
+                padding: 6px;
+            }
+            QListWidget::item:selected {
+                background-color: #ffe066;
+                color: black;
+            }
+        """)
+
         main_layout = QVBoxLayout()
 
-        # 📥 Область добавления записи
-        main_layout.addWidget(QLabel("<b>Добавить запись в чёрный список</b>"))
+        # 📥 Добавление записи
+        main_layout.addWidget(QLabel("🛑 <b>Добавить в чёрный список</b>"))
 
         self.vin_input = QLineEdit()
-        self.vin_input.setPlaceholderText("VIN")
+        self.vin_input.setPlaceholderText("VIN (например, X12345...)")
+
         self.contract_input = QLineEdit()
-        self.contract_input.setPlaceholderText("Договор")
+        self.contract_input.setPlaceholderText("Договор (например, 450-22/А)")
+
         self.reason_input = QTextEdit()
-        self.reason_input.setPlaceholderText("Причина добавления в чёрный список")
-        self.add_button = QPushButton("Добавить")
+        self.reason_input.setPlaceholderText("Причина добавления...")
+
+        self.add_button = QPushButton("➕ Добавить")
+        self.add_button.setStyleSheet("background-color: #32673f;")
         self.add_button.clicked.connect(self.add_record)
 
         main_layout.addWidget(self.vin_input)
@@ -34,16 +53,18 @@ class BlacklistTab(QWidget):
         main_layout.addWidget(self.add_button)
 
         # 🔍 Поиск
-        main_layout.addWidget(QLabel("<b>Поиск в чёрном списке</b>"))
+        main_layout.addWidget(QLabel("🔎 <b>Поиск в чёрном списке</b>"))
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Введите ключевое слово, VIN или договор")
-        self.search_button = QPushButton("Поиск")
+        self.search_input.setPlaceholderText("Введите VIN, договор или причину...")
+        self.search_button = QPushButton("🔍 Искать")
         self.search_button.clicked.connect(self.perform_search)
+
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(self.search_button)
         main_layout.addLayout(search_layout)
 
+        # 📃 Список
         self.list_widget = QListWidget()
         self.list_widget.itemDoubleClicked.connect(self.select_record)
         self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -84,28 +105,28 @@ class BlacklistTab(QWidget):
         self.vin_input.clear()
         self.contract_input.clear()
         self.reason_input.clear()
-        QMessageBox.information(self, "Добавлено", "Запись добавлена в чёрный список.")
+        QMessageBox.information(self, "✅ Добавлено", "Запись добавлена в чёрный список.")
+        self.perform_search()
 
     def perform_search(self):
         query = self.search_input.text().strip().lower()
         self.list_widget.clear()
-        if not query:
-            return
         for record in self.records:
             if (
                 query in record.get("vin", "").lower()
                 or query in record.get("contract", "").lower()
                 or query in record.get("reason", "").lower()
             ):
-                item_text = f"{record.get('vin', '')} | {record.get('contract', '')} | {record.get('reason', '')}"
+                item_text = f"🚫 {record.get('vin', '')} | {record.get('contract', '')}\n📄 {record.get('reason', '')}"
                 item = QListWidgetItem(item_text)
                 item.setData(Qt.UserRole, record)
+                item.setToolTip("ПКМ — редактировать или удалить")
                 self.list_widget.addItem(item)
 
     def select_record(self, item):
         record = item.data(Qt.UserRole)
         QMessageBox.information(
-            self, "Запись",
+            self, "🛑 Запись",
             f"VIN: {record.get('vin','')}\nДоговор: {record.get('contract','')}\nПричина: {record.get('reason','')}"
         )
 
@@ -116,8 +137,7 @@ class BlacklistTab(QWidget):
         record = item.data(Qt.UserRole)
 
         dialog = QDialog(self)
-        dialog.setWindowTitle("Редактирование записи")
-
+        dialog.setWindowTitle("✏️ Редактирование записи")
         layout = QFormLayout()
 
         vin_input = QLineEdit(record.get("vin", ""))
@@ -128,53 +148,42 @@ class BlacklistTab(QWidget):
         layout.addRow("Договор:", contract_input)
         layout.addRow("Причина:", reason_input)
 
-        # Кнопки
+        # 🔘 Кнопки
         buttons = QDialogButtonBox()
-        save_button = buttons.addButton("Сохранить", QDialogButtonBox.AcceptRole)
-        cancel_button = buttons.addButton("Отмена", QDialogButtonBox.RejectRole)
-        delete_button = buttons.addButton("Удалить запись", QDialogButtonBox.DestructiveRole)
+        save_button = buttons.addButton("💾 Сохранить", QDialogButtonBox.AcceptRole)
+        cancel_button = buttons.addButton("❌ Отмена", QDialogButtonBox.RejectRole)
+        delete_button = buttons.addButton("🗑️ Удалить", QDialogButtonBox.DestructiveRole)
 
-        # Стили
-        save_button.setStyleSheet("background-color: #90EE90; color: black; font-weight: bold;")
-        cancel_button.setStyleSheet("background-color: #87CEFA; color: black; font-weight: bold;")
-        delete_button.setStyleSheet("background-color: #FF6347; color: white; font-weight: bold;")
+        # Стили кнопок
+        save_button.setStyleSheet("background-color: #c8f7c5; font-weight: bold;")
+        cancel_button.setStyleSheet("background-color: #cce5ff;")
+        delete_button.setStyleSheet("background-color: #ffcccc; color: red;")
 
         layout.addRow(buttons)
 
         def save_changes():
-            confirm = QMessageBox.question(
-                self, "Подтверждение", "Сохранить изменения?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if confirm == QMessageBox.Yes:
-                updated_record = {
-                    "vin": vin_input.text().strip(),
-                    "contract": contract_input.text().strip(),
-                    "reason": reason_input.toPlainText().strip()
-                }
-                for idx, r in enumerate(self.records):
+            updated = {
+                "vin": vin_input.text().strip(),
+                "contract": contract_input.text().strip(),
+                "reason": reason_input.toPlainText().strip()
+            }
+            if updated != record:
+                for i, r in enumerate(self.records):
                     if r == record:
-                        self.records[idx] = updated_record
+                        self.records[i] = updated
                         break
                 self.save_blacklist()
                 self.perform_search()
-                dialog.accept()
+            dialog.accept()
 
         def delete_record():
-            confirm1 = QMessageBox.question(
-                self, "Удаление", "Вы точно хотите удалить запись?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if confirm1 == QMessageBox.Yes:
-                confirm2 = QMessageBox.question(
-                    self, "Подтверждение удаления", "Это действие необратимо. Удалить?",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                if confirm2 == QMessageBox.Yes:
-                    self.records = [r for r in self.records if r != record]
-                    self.save_blacklist()
-                    self.perform_search()
-                    dialog.accept()
+            confirm = QMessageBox.question(self, "Удалить?", "Удалить запись из списка?",
+                                           QMessageBox.Yes | QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                self.records = [r for r in self.records if r != record]
+                self.save_blacklist()
+                self.perform_search()
+                dialog.accept()
 
         save_button.clicked.connect(save_changes)
         cancel_button.clicked.connect(dialog.reject)

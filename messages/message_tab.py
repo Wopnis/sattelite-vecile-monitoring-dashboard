@@ -17,7 +17,35 @@ class MessageTab(QWidget):
         font = QFont()
         font.setPointSize(12)
 
-        self.info_group = QGroupBox("Обрабатываемая тревога")
+        # 💡 Стилизация
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f4f4f4;
+            }
+            QLabel {
+                color: #2c3e50;
+                font-weight: bold;
+            }
+            QComboBox {
+                background-color: white;
+                border: 1px solid #ccc;
+                padding: 4px;
+            }
+            QTextEdit {
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px;
+            }
+            QPushButton {
+                border-radius: 4px;
+                padding: 8px 14px;
+                font-weight: bold;
+            }
+        """)
+
+        # 🔹 Инфо о тревоге
+        self.info_group = QGroupBox("🔍 Обрабатываемая тревога")
         info_layout = QFormLayout()
         self.vin_label = QLabel("")
         self.contract_label = QLabel("")
@@ -25,35 +53,42 @@ class MessageTab(QWidget):
         self.vin_label.setFont(font)
         self.contract_label.setFont(font)
         self.brand_label.setFont(font)
-        info_layout.addRow("VIN:", self.vin_label)
-        info_layout.addRow("Договор:", self.contract_label)
-        info_layout.addRow("Марка:", self.brand_label)
+        info_layout.addRow("🔢 VIN:", self.vin_label)
+        info_layout.addRow("📄 Договор:", self.contract_label)
+        info_layout.addRow("🚗 Марка:", self.brand_label)
         self.info_group.setLayout(info_layout)
         layout.addWidget(self.info_group)
 
-        layout.addWidget(QLabel("Выберите шаблон сообщения:"))
+        # 🔹 Шаблон
+        layout.addWidget(QLabel("🧩 Выберите шаблон сообщения:"))
         self.template_box = QComboBox()
         self.template_box.setFont(font)
         self.template_box.addItems(self.templates)
         layout.addWidget(self.template_box)
 
-        self.generate_button = QPushButton("Сформировать сообщение")
+        # 🔹 Кнопка генерации
+        self.generate_button = QPushButton("✏️ Сформировать сообщение")
         self.generate_button.setFont(font)
         self.generate_button.clicked.connect(self.generate_message)
+        self.generate_button.setStyleSheet("background-color: #2196F3; color: white;")
         layout.addWidget(self.generate_button)
 
+        # 🔹 Поле для текста
         self.message_box = QTextEdit()
         self.message_box.setFont(QFont("Courier", 12))
         layout.addWidget(self.message_box)
 
-        self.copy_button = QPushButton("Копировать и очистить")
+        # 🔹 Кнопки копирования и очистки
+        self.copy_button = QPushButton("📋 Копировать и очистить")
         self.copy_button.setFont(font)
         self.copy_button.clicked.connect(self.copy_and_clear)
+        self.copy_button.setStyleSheet("background-color: #4CAF50; color: white;")
         layout.addWidget(self.copy_button)
 
-        self.clear_button = QPushButton("Очистить")
+        self.clear_button = QPushButton("🧹 Очистить")
         self.clear_button.setFont(font)
         self.clear_button.clicked.connect(self.message_box.clear)
+        self.clear_button.setStyleSheet("background-color: #FF7043; color: white;")
         layout.addWidget(self.clear_button)
 
         self.setLayout(layout)

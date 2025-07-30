@@ -3,12 +3,11 @@ import json
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
     QPushButton, QListWidget, QListWidgetItem, QMessageBox,
-    QDialog, QDialogButtonBox
+    QDialog, QDialogButtonBox, QApplication
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from datetime import datetime
-from PyQt5.QtWidgets import QApplication
 
 
 class NotesTab(QWidget):
@@ -18,27 +17,60 @@ class NotesTab(QWidget):
         self.notes = self.load_notes()
 
         layout = QVBoxLayout()
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f9f9f9;
+                font-size: 13px;
+            }
+            QLabel {
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            QLineEdit, QTextEdit {
+                background-color: white;
+                border: 1px solid #4f4f4f;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QListWidget {
+                background-color: #fff;              
+                border: 1px solid #4f4f4f;
+;
+            }
+            QPushButton {
+                padding: 8px 12px;
+                border-radius: 5px;
+                font-weight: bold;
+                background-color: #c4c4c4;
+                color: black;
+            }
+        """)
 
         # 🔹 Форма добавления
         self.title_input = QLineEdit()
         self.content_input = QTextEdit()
-        add_button = QPushButton("Добавить заметку")
+        add_button = QPushButton("📝 Добавить заметку")
+        add_button.setStyleSheet("background-color: #4CAF50; color: white;")
         add_button.clicked.connect(self.add_note)
 
-        layout.addWidget(QLabel("Заголовок:"))
+        layout.addWidget(QLabel("🖋️ Заголовок:"))
         layout.addWidget(self.title_input)
-        layout.addWidget(QLabel("Содержание:"))
+        layout.addWidget(QLabel("📋 Содержание:"))
         layout.addWidget(self.content_input)
         layout.addWidget(add_button)
 
         # 🔹 Поиск
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Поиск по заголовку или содержанию...")
+        self.search_input.setPlaceholderText("🔍 Поиск по заголовку или содержанию...")
         self.search_input.returnPressed.connect(self.search_notes)
-        search_button = QPushButton("Искать")
+
+        search_button = QPushButton("🔎 Искать")
+        search_button.setStyleSheet("background-color: #2196F3; color: white;")
         search_button.clicked.connect(self.search_notes)
-        clear_button = QPushButton("Очистить")
+
+        clear_button = QPushButton("🧹 Очистить")
+        clear_button.setStyleSheet("background-color: #FF7043; color: white;")
         clear_button.clicked.connect(self.clear_search)
 
         search_layout.addWidget(self.search_input)
@@ -53,7 +85,8 @@ class NotesTab(QWidget):
         layout.addWidget(self.list_widget)
 
         # 🔹 Удаление
-        delete_button = QPushButton("Удалить выбранную заметку")
+        delete_button = QPushButton("🗑️ Удалить выбранную заметку")
+        delete_button.setStyleSheet("background-color: #c62828; color: white;")
         delete_button.clicked.connect(self.delete_note)
         layout.addWidget(delete_button)
 
@@ -124,7 +157,7 @@ class NotesTab(QWidget):
         layout.addWidget(buttons)
 
         dialog.setLayout(layout)
-        dialog.resize(600, 400)  # 📏 Увеличено окно просмотра
+        dialog.resize(600, 400)
         dialog.exec_()
 
     def handle_right_click(self, item):
@@ -138,7 +171,6 @@ class NotesTab(QWidget):
         except ValueError:
             return
 
-        # 📝 Окно редактирования
         dialog = QDialog(self)
         dialog.setWindowTitle("Редактировать заметку")
         layout = QVBoxLayout()
@@ -158,7 +190,7 @@ class NotesTab(QWidget):
         layout.addWidget(buttons)
 
         dialog.setLayout(layout)
-        dialog.resize(600, 500)  # 📏 Большое окно редактирования
+        dialog.resize(600, 500)
         if dialog.exec_() == QDialog.Accepted:
             new_title = title_input.text().strip()
             new_content = content_input.toPlainText().strip()

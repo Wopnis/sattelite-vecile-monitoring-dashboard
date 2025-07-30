@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QWidget, QFormLayout, QLineEdit,
     QTextEdit, QPushButton, QMessageBox, QHBoxLayout
 )
+# from PyQt5.QtGui import QIcon
 from datetime import datetime
 
 
@@ -14,6 +15,43 @@ class AlarmEntryForm(QWidget):
         self.on_alarm_added = None
 
         layout = QFormLayout()
+        
+        # Стилизация формы
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f4f4f4;
+            }
+            QLineEdit, QTextEdit {
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 4px;
+            }
+            QLabel {
+                color: #333;
+                font-weight: bold;
+            }
+            QPushButton {
+                border-radius: 4px;
+                padding: 6px 12px;
+            }
+        """)
+
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #F9FAFC;
+                font-size: 14px;
+            }
+            QLineEdit, QTextEdit {
+                border: 1px solid #D0D0D0;
+                padding: 4px;
+                background-color: #FFFFFF;
+            }
+            QPushButton {
+                padding: 6px 12px;
+                font-weight: bold;
+            }
+        """)
 
         self.brand_input = QLineEdit()
         self.vin_input = QLineEdit()
@@ -23,20 +61,45 @@ class AlarmEntryForm(QWidget):
         self.message_input = QTextEdit()
         self.comment_input = QTextEdit()
 
-        layout.addRow("Марка ТС*:", self.brand_input)
-        layout.addRow("VIN*:", self.vin_input)
-        layout.addRow("Госномер:", self.license_input)
-        layout.addRow("Договор*:", self.contract_input)
-        layout.addRow("Лизингополучатель:", self.lessee_input)
-        layout.addRow("Сообщение*:", self.message_input)
-        layout.addRow("Комментарий:", self.comment_input)
+        layout.addRow("🚗 Марка ТС*:", self.brand_input)
+        layout.addRow("🔑 VIN*:", self.vin_input)
+        layout.addRow("🚘 Госномер:", self.license_input)
+        layout.addRow("📄 Договор*:", self.contract_input)
+        layout.addRow("👤 Лизингополучатель:", self.lessee_input)
+        layout.addRow("📢 Сообщение*:", self.message_input)
+        layout.addRow("📝 Комментарий:", self.comment_input)
 
         # Кнопки
-        self.save_button = QPushButton("Сохранить тревогу")
+        self.save_button = QPushButton("💾 Сохранить тревогу")
         self.save_button.clicked.connect(self.save_alarm)
 
-        self.clear_button = QPushButton("Очистить форму")
+        self.clear_button = QPushButton("🧹 Очистить форму")
         self.clear_button.clicked.connect(self.clear_form)
+        
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 12px;
+            }
+            QPushButton:disabled {
+                background-color: #A5D6A7;
+                color: #eeeeee;
+            }
+        """)
+
+        self.clear_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF7043;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 12px;
+            }
+        """)
+
 
         button_row = QHBoxLayout()
         button_row.addWidget(self.save_button)
@@ -54,12 +117,10 @@ class AlarmEntryForm(QWidget):
         message = self.message_input.toPlainText().strip()
         comment = self.comment_input.toPlainText().strip()
 
-        # Проверка обязательных полей
         if not all([brand, vin, contract, message]):
             QMessageBox.warning(self, "Ошибка", "Пожалуйста, заполните все обязательные поля (*).")
             return
 
-        # ✅ Проверка чёрного списка
         if self.blacklist_tab and self.blacklist_tab.is_blacklisted(vin, contract):
             warning_box = QMessageBox(self)
             warning_box.setWindowTitle("⚠️ Внимание")
@@ -67,23 +128,23 @@ class AlarmEntryForm(QWidget):
             warning_box.setIcon(QMessageBox.Warning)
             warning_box.setStyleSheet("""
                 QMessageBox {
-                    background-color: #C62828;  /* Красный фон */
-                    color: white;               /* Белый текст */
-                    font-weight: bold;
+                    background-color: #FFEBEE;
+                    color: #C62828;
                 }
                 QPushButton {
-                    background-color: white;
-                    color: black;
+                    background-color: #C62828;
+                    color: white;
                 }
             """)
+
+
             warning_box.exec_()
 
-        # Проверка на дубликат активной тревоги
         for alarm in self.alarm_manager.alarms:
             if (
-                alarm.get("vin") == vin
-                and alarm.get("contract") == contract
-                and alarm.get("status") == "active"
+                alarm.get("vin") == vin and
+                alarm.get("contract") == contract and
+                alarm.get("status") == "active"
             ):
                 QMessageBox.warning(self, "Дубликат", "Активная тревога с таким VIN и договором уже существует.")
                 return
@@ -113,7 +174,6 @@ class AlarmEntryForm(QWidget):
         self.save_button.setEnabled(False)
 
     def clear_form(self):
-        print("[FORM] Очистка формы пользователя")
         self.brand_input.clear()
         self.vin_input.clear()
         self.license_input.clear()

@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
     QTextEdit, QListWidget, QListWidgetItem, QMessageBox
 )
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from utils.shift_report import generate_shift_report
 
@@ -21,24 +22,57 @@ class ShiftsTab(QWidget):
         self.current_shift_id = self.active_shift["id"] if self.active_shift else None
 
         layout = QVBoxLayout()
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f8f9fa;
+                font-size: 13px;
+            }
+            QLabel {
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            QTextEdit {
+                background-color: #ffffff;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QListWidget {
+                background-color: white;
+                border: 1px solid #ccc;
+            }
+            QPushButton {
+                padding: 8px 12px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+        """)
 
         self.status_label = QLabel()
+        self.status_label.setFont(QFont("Arial", 11))
         layout.addWidget(self.status_label)
 
-        self.start_button = QPushButton("Начать смену")
+        # 🔹 Кнопка начала смены
+        self.start_button = QPushButton("▶️ Начать смену")
+        self.start_button.setStyleSheet("background-color: #4CAF50; color: white;")
         self.start_button.clicked.connect(self.start_shift)
         layout.addWidget(self.start_button)
 
-        self.end_button = QPushButton("Завершить смену")
+        # 🔹 Кнопка завершения смены
+        self.end_button = QPushButton("⏹️ Завершить смену")
+        self.end_button.setStyleSheet("background-color: #e53935; color: white;")
         self.end_button.clicked.connect(self.end_shift)
         layout.addWidget(self.end_button)
         self.end_button.setEnabled(bool(self.active_shift))
 
-        layout.addWidget(QLabel("Комментарий:"))
+        # 🔹 Комментарий к смене
+        layout.addWidget(QLabel("📝 Комментарий:"))
         self.comment_input = QTextEdit()
+        self.comment_input.setFont(QFont("Arial", 10))
         layout.addWidget(self.comment_input)
 
-        layout.addWidget(QLabel("История смен:"))
+        # 🔹 История смен
+        layout.addWidget(QLabel("📜 История смен:"))
         self.shift_list = QListWidget()
         self.shift_list.itemDoubleClicked.connect(self.show_shift_report)
         layout.addWidget(self.shift_list)
@@ -51,7 +85,6 @@ class ShiftsTab(QWidget):
             with open(self.data_file, "r", encoding="utf-8") as f:
                 try:
                     data = json.load(f)
-                    # ✅ фильтруем мусор — оставляем только словари
                     return [entry for entry in data if isinstance(entry, dict)]
                 except json.JSONDecodeError:
                     return []
@@ -85,6 +118,7 @@ class ShiftsTab(QWidget):
         self.active_shift = new_shift
         self.current_shift_id = new_shift_id
 
+        # 💾 Присваиваем ID текущим активным тревогам
         if self.alarm_manager:
             active_alarms = [
                 alarm for alarm in self.alarm_manager.alarms
@@ -122,11 +156,13 @@ class ShiftsTab(QWidget):
 
     def refresh_ui(self):
         if self.active_shift:
-            self.status_label.setText(f"<b>Текущая смена начата:</b> {self.active_shift['started_at']}")
+            self.status_label.setText(
+                f"<b>🟢 Текущая смена начата:</b> {self.active_shift['started_at']}"
+            )
             self.start_button.setEnabled(False)
             self.end_button.setEnabled(True)
         else:
-            self.status_label.setText("Нет активной смены.")
+            self.status_label.setText("⚪ Нет активной смены.")
             self.start_button.setEnabled(True)
             self.end_button.setEnabled(False)
 
@@ -149,4 +185,3 @@ class ShiftsTab(QWidget):
         full_report = f"{report}\n{comment_text}"
 
         QMessageBox.information(self, "📋 Отчёт по смене", full_report)
-

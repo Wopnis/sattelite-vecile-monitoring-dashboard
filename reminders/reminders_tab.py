@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer, QDateTime
 from PyQt5.QtMultimedia import QSound
-
 from utils.telegram_utils import send_telegram_message
 
 
@@ -17,48 +16,70 @@ class RemindersTab(QWidget):
         super().__init__()
         self.data_file = "reminders/reminders_data.json"
         self.reminders = self.load_reminders()
-        self.sound = None  # 🔉 Хранение текущего звука
+        self.sound = None
+
+        self.setStyleSheet("""
+            QPushButton {
+                padding: 6px;
+                font-weight: bold;
+            }
+            QListWidget::item {
+                padding: 6px;
+            }
+            QListWidget::item:selected {
+                background-color: #a0d8ef;
+                color: black;
+            }
+        """)
 
         layout = QVBoxLayout()
 
         # 🔹 Форма добавления
+        layout.addWidget(QLabel("⏰ <b>Новое напоминание</b>"))
         self.text_input = QLineEdit()
+        self.text_input.setPlaceholderText("Текст напоминания...")
+
         self.datetime_input = QDateTimeEdit()
         self.datetime_input.setCalendarPopup(True)
         self.datetime_input.setDateTime(QDateTime.currentDateTime())
+
         self.enabled_checkbox = QCheckBox("Активно")
         self.enabled_checkbox.setChecked(True)
-        self.telegram_checkbox = QCheckBox("Оповещение в Telegram")
+
+        self.telegram_checkbox = QCheckBox("Оповестить в Telegram")
         self.telegram_checkbox.setChecked(True)
 
-        add_button = QPushButton("Добавить напоминание")
+        add_button = QPushButton("➕ Добавить")
+        add_button.setStyleSheet("background-color: #2d952d;")
         add_button.clicked.connect(self.add_reminder)
 
-        layout.addWidget(QLabel("Текст напоминания:"))
+        layout.addWidget(QLabel("📝 Текст:"))
         layout.addWidget(self.text_input)
-        layout.addWidget(QLabel("Дата и время:"))
+        layout.addWidget(QLabel("📅 Дата и время:"))
         layout.addWidget(self.datetime_input)
         layout.addWidget(self.enabled_checkbox)
         layout.addWidget(self.telegram_checkbox)
         layout.addWidget(add_button)
 
-        # 🔹 Список напоминаний
+        # 🔹 Список
+        layout.addWidget(QLabel("📋 <b>Список напоминаний</b>"))
         self.list_widget = QListWidget()
         self.list_widget.itemDoubleClicked.connect(self.view_reminder)
         layout.addWidget(self.list_widget)
 
         # 🔹 Удаление
-        del_button = QPushButton("Удалить выбранное")
+        del_button = QPushButton("🗑️ Удалить выбранное")
+        del_button.setStyleSheet("background-color: #c11515;")
         del_button.clicked.connect(self.delete_reminder)
         layout.addWidget(del_button)
 
         self.setLayout(layout)
         self.refresh_list()
 
-        # 🔔 Таймер на проверку напоминаний
+        # 🔔 Таймер проверки
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_reminders)
-        self.timer.start(10_000)  # каждые 10 секунд
+        self.timer.start(10_000)
 
     def load_reminders(self):
         if os.path.exists(self.data_file):
@@ -76,6 +97,7 @@ class RemindersTab(QWidget):
         if not text:
             QMessageBox.warning(self, "Ошибка", "Текст не может быть пустым.")
             return
+
         timestamp = self.datetime_input.dateTime().toString("yyyy-MM-dd HH:mm:ss")
         self.reminders.append({
             "text": text,
@@ -84,6 +106,7 @@ class RemindersTab(QWidget):
             "enabled": self.enabled_checkbox.isChecked(),
             "telegram": self.telegram_checkbox.isChecked()
         })
+
         self.text_input.clear()
         self.save_reminders()
         self.refresh_list()
@@ -103,8 +126,12 @@ class RemindersTab(QWidget):
         item = self.list_widget.currentItem()
         if not item:
             return
+
         reminder = item.data(Qt.UserRole)
-        confirm = QMessageBox.question(self, "Удалить?", f"Удалить: {reminder['text']}?", QMessageBox.Yes | QMessageBox.No)
+        confirm = QMessageBox.question(
+            self, "Удалить?", f"Удалить: {reminder['text']}?",
+            QMessageBox.Yes | QMessageBox.No
+        )
         if confirm == QMessageBox.Yes:
             self.reminders.remove(reminder)
             self.save_reminders()
@@ -113,8 +140,9 @@ class RemindersTab(QWidget):
     def view_reminder(self, item):
         reminder = item.data(Qt.UserRole)
         dialog = QDialog(self)
-        dialog.setWindowTitle("Напоминание")
+        dialog.setWindowTitle("🔔 Напоминание")
         layout = QVBoxLayout()
+
         msg = QTextEdit()
         msg.setReadOnly(True)
         msg.setText(f"🕒 Время: {reminder['time']}\n\n{reminder['text']}")
@@ -131,20 +159,23 @@ class RemindersTab(QWidget):
     def check_reminders(self):
         now = datetime.now()
         updated = False
+
         for reminder in self.reminders:
             if not reminder.get("enabled") or reminder.get("notified"):
                 continue
+
             remind_time = datetime.strptime(reminder["time"], "%Y-%m-%d %H:%M:%S")
             if now >= remind_time:
                 reminder["notified"] = True
                 updated = True
                 self.trigger_reminder(reminder)
+
         if updated:
             self.save_reminders()
             self.refresh_list()
 
     def trigger_reminder(self, reminder):
-        # 🔊 Зацикленный звук
+        # 🔊 Звук
         self.sound = QSound("reminders/notify_reminder.wav")
         self.sound.setLoops(QSound.Infinite)
         self.sound.play()

@@ -1,12 +1,8 @@
-# import os
 import json
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
-    QListWidget, 
-    # QListWidgetItem, 
-    QPushButton, QMessageBox
+    QListWidget, QPushButton, QMessageBox
 )
-# from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
 
@@ -17,22 +13,49 @@ class LettersTab(QWidget):
         self.templates = self.load_templates()
 
         layout = QVBoxLayout()
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f4f6f7;
+                font-size: 13px;
+                color: black;
+            }
+            QLabel {
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            QLineEdit, QTextEdit {
+                background-color: white;
+                border: 1px solid black;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QListWidget {
+                background-color: #fff;
+                border: 1px solid #ccc;
+            }
+            QPushButton {
+                padding: 8px 12px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+        """)
 
-        # 🔹 Поля для ввода данных (как в тревогах)
+        # 🔹 Поля для ввода данных
         self.fields = {}
         field_names = {
-            "brand": "Марка ТС",
-            "vin": "VIN",
-            "license": "Госномер",
-            "contract": "Договор",
-            "message": "Описание ситуации"
+            "brand": "🚗 Марка ТС",
+            "vin": "🔑 VIN",
+            "license": "📛 Госномер",
+            "contract": "📄 Договор",
+            "message": "🗒️ Описание ситуации"
         }
 
         for key, label in field_names.items():
             hlayout = QHBoxLayout()
-            hlayout.addWidget(QLabel(label + ":"))
+            lbl = QLabel(label + ":")
             line_edit = QLineEdit()
             self.fields[key] = line_edit
+            hlayout.addWidget(lbl)
             hlayout.addWidget(line_edit)
             layout.addLayout(hlayout)
 
@@ -51,7 +74,8 @@ class LettersTab(QWidget):
         layout.addWidget(self.result_text)
 
         # 🔹 Кнопка генерации
-        self.generate_button = QPushButton("Сформировать письмо")
+        self.generate_button = QPushButton("📨 Сформировать письмо")
+        self.generate_button.setStyleSheet("background-color: #4CAF50; color: white;")
         self.generate_button.clicked.connect(self.generate_message)
         layout.addWidget(self.generate_button)
 
